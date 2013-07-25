@@ -905,16 +905,14 @@ bool MinePrime_hp(Reap_CPU_param* state, Work& tempwork)
                 if (globalconfs.coin.config.GetValue<bool>("printmining"))
                     printf("PrimecoinMiner() : Round primorial=%u tests=%u primes=%u time=%uus expect=%us\n", nPrimorialMultiplier, nRoundTests, nRoundPrimesHit, (unsigned int) nRoundTime, (unsigned int)(nTimeExpected/1000000));
 
-                /*
-
                 // Primecoin: reset sieve+primality round timer
                 nRoundTests = 0;
                 nRoundPrimesHit = 0;
-                nPrimeTimerStart = GetTimeMicros();
+                nPrimeTimerStart = ticker()*1000;
                 if (nTimeExpected > nTimeExpectedPrev)
                     fIncrementPrimorial = !fIncrementPrimorial;
                 nTimeExpectedPrev = nTimeExpected;
-				*/
+
                 // Primecoin: dynamic adjustment of primorial multiplier
                 if (fIncrementPrimorial)
                 {
