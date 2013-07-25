@@ -61,11 +61,7 @@ set(HEADERS
 ## Targets ##
 
 add_executable(reaper ${SOURCES} ${HEADERS})
-
 include_directories(${PROJECT_BINARY_DIR})
-include_directories("/e/ohjelmat/mingw/include")
-link_directories("/e/ohjelmat/mingw/lib")
-
 set_target_properties(reaper PROPERTIES COMPILE_FLAGS -O2)
 
 ## OpenCL detection ##
@@ -89,33 +85,10 @@ if(NOT CPU_MINING_ONLY)
     
 endif(NOT CPU_MINING_ONLY)
 
-## Detection of the rest of the libs ##
-
-##find_library(PTHREAD_LIBRARY pthreads)
-##find_path(PTHREAD_INCLUDE_DIR NAMES pthread.h)
-
-##find_library(CURL_LIBRARY curl)
-##find_path(CURL_INCLUDE_DIR NAMES curl.h PATH_SUFFIXES curl)
-
-## include_directories(${PTHREAD_INCLUDE_DIR} ${CURL_INCLUDE_DIR})
-## link_directories(${PTHREAD_LIBRARY} ${CURL_LIBRARY})
-
 ## Library configuration ##
 
 if(CPU_MINING_ONLY)
-    target_link_libraries(reaper gmp blkmaker-0.1 blkmaker_jansson-0.1 jansson pthread ${CURL_LIBRARY})
+    target_link_libraries(reaper curldll gmp blkmaker-0.1 blkmaker_jansson-0.1 jansson pthread)
 else(CPU_MINING_ONLY)
-    target_link_libraries(reaper gmp blkmaker-0.1 blkmaker_jansson-0.1 jansson pthread ${CURL_LIBRARY} ${OPENCL_LIBRARY})
+    target_link_libraries(reaper curldll gmp blkmaker-0.1 blkmaker_jansson-0.1 jansson pthread ${OPENCL_LIBRARY})
 endif(CPU_MINING_ONLY)
-
-## Make MSVC use Runtime Library: "Multithreaded" instead of "Multithreaded DLL"
-
-if(MSVC)
-	foreach(flag_var
-			CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
-			CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
-		if(${flag_var} MATCHES "/MD")
-			string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
-		endif(${flag_var} MATCHES "/MD")
-	endforeach(flag_var)
-endif(MSVC)
