@@ -40,6 +40,7 @@ set(SOURCES
     Util.cpp
 	Sieve.cpp
 	Primes.cpp
+	CSieveOfEratosthenes.cpp
 )
 
 set(HEADERS 
@@ -56,6 +57,7 @@ set(HEADERS
 	Util.h
 	Sieve.h
 	Primes.h
+	CSieveOfEratosthenes.h
 )
 
 ## Targets ##

@@ -60,6 +60,7 @@ void Config::Load(string filename, vector<string> included_already)
 	config_values["min_chain_length"] = "uint";
 	config_values["sievesize"] = "uint";
 	config_values["sievepercentage"] = "uint";
+	config_values["primecoin_address"] = "string";
 	
 	ifstream filu(filename.c_str());
 	while(!filu.eof())
