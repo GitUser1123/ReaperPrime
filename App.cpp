@@ -689,7 +689,11 @@ void App::Parse_XPM(string data)
 	//TODO: CBTXN SHIT
 	{
 		_cbscript_t opt_coinbase_script;
-		const char* ret = set_b58addr("mu1DxMiRUgzjNrVyVeHeRhqDm3XVK12SK2",&opt_coinbase_script);
+		string address = globalconfs.coin.config.GetValue<string>("primecoin_address");
+		if (address == "")
+			throw string("Please set primecoin_address in primecoin.conf to the address you want to mine to.");
+
+		const char* ret = set_b58addr(address.c_str(),&opt_coinbase_script);
 		if (ret != NULL)
 		{
 			cout << "RET! " << ret << endl;
