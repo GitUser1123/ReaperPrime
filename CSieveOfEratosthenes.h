@@ -67,8 +67,31 @@ class CSieveOfEratosthenes
     }
 
 public:
+	bool inited;
+	CSieveOfEratosthenes()
+	{
+		inited = false;
+	}
+
     CSieveOfEratosthenes(unsigned int nSieveSize, unsigned int nBits, mpz_class& mpzHash, mpz_class& mpzFixedMultiplier)//, CBlockIndex* pindexPrev)
     {
+		Init(nSieveSize,nBits,mpzHash,mpzFixedMultiplier);
+    }
+    
+    ~CSieveOfEratosthenes()
+    {
+		Deinit();
+    }
+	
+    unsigned long *vfCompositeCunningham1A;
+    unsigned long *vfCompositeCunningham1B;
+    unsigned long *vfCompositeCunningham2A;
+    unsigned long *vfCompositeCunningham2B;
+
+	void Init(unsigned int nSieveSize, unsigned int nBits, mpz_class& mpzHash, mpz_class& mpzFixedMultiplier)
+	{
+		if (inited)
+			return;
         this->nSieveSize = nSieveSize;
         this->nBits = nBits;
         this->mpzFixedFactor = mpzFixedMultiplier * mpzHash;
@@ -80,12 +103,25 @@ public:
         nCandidatesBytes = nCandidatesWords * sizeof(unsigned long);
         vfCandidates = (unsigned long *)malloc(nCandidatesBytes);
         memset(vfCandidates, 0, nCandidatesBytes);
-    }
-    
-    ~CSieveOfEratosthenes()
-    {
-        free(vfCandidates);
-    }
+		
+		vfCompositeCunningham1A = (unsigned long *)malloc(nCandidatesBytes);
+		vfCompositeCunningham1B = (unsigned long *)malloc(nCandidatesBytes);
+		vfCompositeCunningham2A = (unsigned long *)malloc(nCandidatesBytes);
+		vfCompositeCunningham2B = (unsigned long *)malloc(nCandidatesBytes);
+		
+		inited = true;
+	}
+	void Deinit(bool whine = true)
+	{
+		if (!inited)
+			return;
+		free(vfCandidates);
+		free(vfCompositeCunningham1A);
+		free(vfCompositeCunningham1B);
+		free(vfCompositeCunningham2A);
+		free(vfCompositeCunningham2B);
+		inited = false;
+	}
 
     // Get total number of candidates for power test
     unsigned int GetCandidateCount()

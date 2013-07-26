@@ -60,11 +60,6 @@ bool CSieveOfEratosthenes::Weave()
     memset(vCunningham2BMultipliers, 0xFF, sizeof(vCunningham2BMultipliers));
 
     // bitsets that can be combined to obtain the final bitset of candidates
-    unsigned long *vfCompositeCunningham1A = (unsigned long *)malloc(nCandidatesBytes);
-    unsigned long *vfCompositeCunningham1B = (unsigned long *)malloc(nCandidatesBytes);
-    unsigned long *vfCompositeCunningham2A = (unsigned long *)malloc(nCandidatesBytes);
-    unsigned long *vfCompositeCunningham2B = (unsigned long *)malloc(nCandidatesBytes);
-
     memset(vfCompositeCunningham1A, 0, nCandidatesBytes);
     memset(vfCompositeCunningham1B, 0, nCandidatesBytes);
     memset(vfCompositeCunningham2A, 0, nCandidatesBytes);
@@ -177,11 +172,6 @@ bool CSieveOfEratosthenes::Weave()
     }
 
     this->nPrimeSeq = nPrimes - 1;
-
-    free(vfCompositeCunningham1A);
-    free(vfCompositeCunningham1B);
-    free(vfCompositeCunningham2A);
-    free(vfCompositeCunningham2B);
     mpz_clear(mpzFixedFactor);
 
     return false;

@@ -616,9 +616,9 @@ static bool ProbablePrimeChainTestFast(const mpz_class& mpzPrimeChainOrigin, CPr
 }
 
 // Mine probable prime chain of form: n = h * p# +/- 1
-bool MineProbablePrimeChain(Reap_CPU_param* state, Work& tempwork, CSieveOfEratosthenes** psieve, mpz_class& mpzFixedMultiplier, bool& fNewBlock, unsigned int& nTriedMultiplier, unsigned int& nProbableChainLength, unsigned int& nTests, unsigned int& nPrimesHit, unsigned int& nChainsHit, mpz_class& mpzHash, unsigned int nPrimorialMultiplier)
+bool MineProbablePrimeChain(Reap_CPU_param* state, Work& tempwork, CSieveOfEratosthenes& psieve, mpz_class& mpzFixedMultiplier, bool& fNewBlock, unsigned int& nTriedMultiplier, unsigned int& nProbableChainLength, unsigned int& nTests, unsigned int& nPrimesHit, unsigned int& nChainsHit, mpz_class& mpzHash, unsigned int nPrimorialMultiplier)
 {
-    CSieveOfEratosthenes *lpsieve;
+    //CSieveOfEratosthenes *lpsieve;
     nProbableChainLength = 0;
     nTests = 0;
     nPrimesHit = 0;
@@ -626,37 +626,42 @@ bool MineProbablePrimeChain(Reap_CPU_param* state, Work& tempwork, CSieveOfErato
     //const unsigned int nBits = block.nBits;
 	const unsigned int nBits = *(uint*)&tempwork.data[72];
 
-    if (fNewBlock && *psieve != NULL)
+    if (fNewBlock && psieve.inited)
     {
         // Must rebuild the sieve
-		delete *psieve;
-		*psieve = NULL;
+		
+		psieve.Deinit();
+		
+		//delete *psieve;
+		//*psieve = NULL;
         //psieve.reset();
     }
     fNewBlock = false;
 
     int64 nStart; // microsecond timer
     //CBlockIndex* pindexPrev = pindexBest;
-    if ((lpsieve = *psieve) == NULL)
+	//lpsieve = psieve;
+    if (!psieve.inited)
     {
         // Build sieve
         nStart = ticker()*1000;
-        lpsieve = new CSieveOfEratosthenes(nSieveSize, nBits, mpzHash, mpzFixedMultiplier);
-        while (lpsieve->Weave())
+        //lpsieve = new CSieveOfEratosthenes(nSieveSize, nBits, mpzHash, mpzFixedMultiplier);
+		psieve.Init(nSieveSize, nBits, mpzHash, mpzFixedMultiplier);
+        while (psieve.Weave())
 		{
 			if (tempwork.time != current_work.time)
 				break;
 		}
         if (globalconfs.coin.config.GetValue<bool>("printmining"))
-            printf("MineProbablePrimeChain() : new sieve (%u/%u@%u%%) ready in %uus\n", lpsieve->GetCandidateCount(), nSieveSize, lpsieve->GetProgressPercentage(), (unsigned int) (ticker()*1000 - nStart));
-        *psieve = lpsieve;
+            printf("MineProbablePrimeChain() : new sieve (%u/%u@%u%%) ready in %uus\n", psieve.GetCandidateCount(), nSieveSize, psieve.GetProgressPercentage(), (unsigned int) (ticker()*1000 - nStart));
+        //*psieve = lpsieve;
     }
 
     mpz_class mpzHashMultiplier = mpzHash * mpzFixedMultiplier;
     mpz_class mpzChainOrigin;
     
     // Count the number of candidates produced by the sieve
-    unsigned int nCandidates = lpsieve->GetCandidateCount();
+    unsigned int nCandidates = psieve.GetCandidateCount();
     
     // Determine the sequence number of the round primorial
     unsigned int nPrimorialSeq = 0;
@@ -679,14 +684,15 @@ bool MineProbablePrimeChain(Reap_CPU_param* state, Work& tempwork, CSieveOfErato
 		if (tempwork.time != current_work.time)
 			break;
         nTests++;
-        if (!lpsieve->GetNextCandidateMultiplier(nTriedMultiplier))
+        if (!psieve.GetNextCandidateMultiplier(nTriedMultiplier))
         {
             // power tests completed for the sieve
             //if (fDebug && GetBoolArg("-printmining"))
                 //printf("MineProbablePrimeChain() : %u tests (%u primes and %u %d-chains) in %uus\n", nTests, nPrimesHit, nChainsHit, nStatsChainLength, (unsigned int) (GetTimeMicros() - nStart));
             //psieve.reset();
-			delete *psieve;
-			*psieve = NULL;
+			psieve.Deinit();
+			//delete *psieve;
+			//*psieve = NULL;
             fNewBlock = true; // notify caller to change nonce
             return false;
         }
@@ -814,7 +820,8 @@ bool MinePrime_hp(Reap_CPU_param* state, Work& tempwork)
 	bool found = false;
 	
 	//START HP7 CODE
-	CSieveOfEratosthenes* psieve = NULL;
+	//CSieveOfEratosthenes* psieve = NULL;
+	CSieveOfEratosthenes psieve;
 	static const unsigned int nPrimorialHashFactor = 7;
     unsigned int nPrimorialMultiplier = nPrimorialHashFactor;	
 	unsigned int nHashFactor = PrimorialFast(nPrimorialHashFactor);
@@ -882,7 +889,7 @@ bool MinePrime_hp(Reap_CPU_param* state, Work& tempwork)
 
             // Primecoin: mine for prime chain
             unsigned int nProbableChainLength;
-            if (MineProbablePrimeChain(state, tempwork, &psieve, mpzFixedMultiplier, fNewBlock, nTriedMultiplier, nProbableChainLength, nTests, nPrimesHit, nChainsHit, mpzHash, nPrimorialMultiplier))
+            if (MineProbablePrimeChain(state, tempwork, psieve, mpzFixedMultiplier, fNewBlock, nTriedMultiplier, nProbableChainLength, nTests, nPrimesHit, nChainsHit, mpzHash, nPrimorialMultiplier))
             {
 				return true;
                 /*SetThreadPriority(THREAD_PRIORITY_NORMAL);
