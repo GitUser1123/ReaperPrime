@@ -19,12 +19,6 @@ bool CPU_Hash_Below_Target(uchar* hash, uchar* target);
 
 //A bunch of helper functions
 static
-unsigned int TargetGetLength(unsigned int nBits)
-{
-	return ((nBits & TARGET_LENGTH_MASK) >> nFractionalBits);
-}
-
-static
 void TargetIncrementLength(unsigned int *pnBits)
 {
     *pnBits += (1 << nFractionalBits);

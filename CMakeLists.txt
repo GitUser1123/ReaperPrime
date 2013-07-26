@@ -45,6 +45,7 @@ set(SOURCES
     Util.cpp
 	Sieve.cpp
 	Primes.cpp
+	CSieveOfEratosthenes.cpp
 )
 
 set(HEADERS 
@@ -61,12 +62,12 @@ set(HEADERS
 	Util.h
 	Sieve.h
 	Primes.h
+	CSieveOfEratosthenes.h
 )
 
 ## Targets ##
 
 add_executable(reaper ${SOURCES} ${HEADERS})
-
 include_directories(
 	${PROJECT_BINARY_DIR}
 )
@@ -109,13 +110,6 @@ if(NOT CPU_MINING_ONLY)
     
 endif(NOT CPU_MINING_ONLY)
 
-##find_library(CURL_LIBRARY curl)
-##find_path(CURL_INCLUDE_DIR NAMES curl.h PATH_SUFFIXES curl)
- 
-##include_directories(${CURL_INCLUDE_DIR})
-##link_directories(${CURL_LIBRARY})
-
-
 # Dependencies
 message("asking for OpenCL = " ${OPENCL_LIBRARY})
 ##message("asking for CURL = " ${CURL_LIBRARY})
@@ -125,15 +119,3 @@ if(CPU_MINING_ONLY)
 else(CPU_MINING_ONLY)
     target_link_libraries(reaper gmp blkmaker-0.1 blkmaker_jansson-0.1 jansson pthread curl ${OPENCL_LIBRARY})
 endif(CPU_MINING_ONLY)
-
-## Make MSVC use Runtime Library: "Multithreaded" instead of "Multithreaded DLL"
-
-if(MSVC)
-	foreach(flag_var
-			CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
-			CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
-		if(${flag_var} MATCHES "/MD")
-			string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
-		endif(${flag_var} MATCHES "/MD")
-	endforeach(flag_var)
-endif(MSVC)
