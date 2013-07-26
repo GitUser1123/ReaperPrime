@@ -168,7 +168,7 @@ void GeneratePrimeTable()
 }
 
 // Get next prime number of p
-bool PrimeTableGetNextPrime(unsigned int& p)
+bool PrimeTableGetNextPrime_old(unsigned int& p)
 {
     //BOOST_FOREACH(unsigned int nPrime, vPrimes)
 	for(uint i=0; i<vPrimes.size(); ++i)
@@ -184,7 +184,7 @@ bool PrimeTableGetNextPrime(unsigned int& p)
 }
 
 // Get previous prime number of p
-bool PrimeTableGetPreviousPrime(unsigned int& p)
+bool PrimeTableGetPreviousPrime_old(unsigned int& p)
 {
     unsigned int nPrevPrime = 0;
 	//BOOST_FOREACH(unsigned int nPrime, vPrimes)
@@ -204,7 +204,7 @@ bool PrimeTableGetPreviousPrime(unsigned int& p)
 }
 
 // Compute Primorial number p#
-void Primorial(unsigned int p, mpz_class& mpzPrimorial)
+void Primorial_old(unsigned int p, mpz_class& mpzPrimorial)
 {
     unsigned long nPrimorial = 1;
     unsigned int i;
@@ -240,7 +240,7 @@ void Primorial(unsigned int p, mpz_class& mpzPrimorial)
 
 // Compute Primorial number p#
 // Fast 32-bit version assuming that p <= 23
-unsigned int PrimorialFast(unsigned int p)
+unsigned int PrimorialFast_old(unsigned int p)
 {
     unsigned int nPrimorial = 1;
 	//BOOST_FOREACH(unsigned int nPrime, vPrimes)
@@ -254,7 +254,7 @@ unsigned int PrimorialFast(unsigned int p)
 }
 
 // Compute first primorial number greater than or equal to pn
-void PrimorialAt(mpz_class& bn, mpz_class& mpzPrimorial)
+void PrimorialAt_old(mpz_class& bn, mpz_class& mpzPrimorial)
 {
 	//BOOST_FOREACH(unsigned int nPrime, vPrimes)
 	for(uint i=0; i<vPrimes.size(); ++i)
