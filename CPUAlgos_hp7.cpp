@@ -117,6 +117,7 @@ static const int64 CENT = 1000000;
 
 // Prime Table
 std::vector<unsigned int> vPrimes;
+std::vector<mpz_class> vPrimorials;
 std::vector<unsigned int> vTwoInverses;
 unsigned int nSieveSize = nDefaultSieveSize;
 unsigned int nSievePercentage = nDefaultSievePercentage;
@@ -143,9 +144,16 @@ void GeneratePrimeTable()
         for (unsigned int nComposite = nFactor * nFactor; nComposite < nPrimeTableLimit; nComposite += nFactor)
             vfComposite[nComposite] = true;
     }
+	mpz_class primorial(1);
     for (unsigned int n = 2; n < nPrimeTableLimit; n++)
+	{
         if (!vfComposite[n])
+		{
+			primorial *= n;
             vPrimes.push_back(n);
+			vPrimorials.push_back(primorial);
+		}
+	}
     printf("GeneratePrimeTable() : prime table [1, %d] generated with %lu primes", nPrimeTableLimit, vPrimes.size());
     //BOOST_FOREACH(unsigned int nPrime, vPrimes)
     //    printf(" %u", nPrime);
@@ -823,33 +831,39 @@ bool MinePrime_hp(Reap_CPU_param* state, Work& tempwork)
 	//CSieveOfEratosthenes* psieve = NULL;
 	CSieveOfEratosthenes psieve;
 	static const unsigned int nPrimorialHashFactor = 7;
+	static const unsigned int nPrimorialHashIndex = 3;
     unsigned int nPrimorialMultiplier = nPrimorialHashFactor;	
-	unsigned int nHashFactor = PrimorialFast(nPrimorialHashFactor);
+    unsigned int nPrimorialMultiplierIndex = nPrimorialHashIndex;	
+	//unsigned int nHashFactor = PrimorialFast(nPrimorialHashFactor);
+	mpz_class nHashFactor = vPrimorials[nPrimorialHashIndex];
+
     int64 nTimeExpected = 0;   // time expected to prime chain (micro-second)
     int64 nTimeExpectedPrev = 0; // time expected to prime chain last time
     bool fIncrementPrimorial = true; // increase or decrease primorial factor
 
 	while(true)
 	{
-		if (tempwork.time != current_work.time)
-			break;
+		if (tempwork.time != current_work.time) break;
+
         int64 nStart = ticker()/1000;
         bool fNewBlock = true;
         unsigned int nTriedMultiplier = 0;
 
         // Primecoin: try to find hash divisible by primorial
-        unsigned int nHashFactor = PrimorialFast(nPrimorialHashFactor);
+        // unsigned int nHashFactor = PrimorialFast(nPrimorialHashFactor);
+		mpz_class nHashFactor = vPrimorials[nPrimorialHashIndex];
 
         // Based on mustyoshi's patch from https://bitcointalk.org/index.php?topic=251850.msg2689981#msg2689981
         mpz_class mpzHash;
-        while(true) {
-
+        while(true) 
+		{
             // Check that the hash meets the minimum
-
             // Check that the hash is divisible by the fixed primorial
 			mpzHash = mpz_class(hashnum.n);
             //mpz_set_uint256(mpzHash.get_mpz_t(), phash);
-            if (!mpz_divisible_ui_p(mpzHash.get_mpz_t(), nHashFactor)) {
+            //if (!mpz_divisible_ui_p(mpzHash.get_mpz_t(), nHashFactor)) 
+            if (!mpz_divisible_p(mpzHash.get_mpz_t(), nHashFactor.get_mpz_t())) 
+			{
 				return false;
             }
 
@@ -861,12 +875,12 @@ bool MinePrime_hp(Reap_CPU_param* state, Work& tempwork)
         unsigned int nRoundTests = 0;
         unsigned int nRoundPrimesHit = 0;
         int64 nPrimeTimerStart = ticker()*1000;
-        Primorial(nPrimorialMultiplier, mpzPrimorial);
+        //Primorial(nPrimorialMultiplier, mpzPrimorial);
+		mpzPrimorial = vPrimorials[nPrimorialMultiplierIndex];
 
         while(true)
         {
-			if (tempwork.time != current_work.time)
-				break;
+			if (tempwork.time != current_work.time) break;
 
             unsigned int nTests = 0;
             unsigned int nPrimesHit = 0;
@@ -876,9 +890,14 @@ bool MinePrime_hp(Reap_CPU_param* state, Work& tempwork)
             mpz_class mpzMultiplierMin = mpzPrimeMin * nHashFactor / mpzHash + 1;
             while (mpzPrimorial < mpzMultiplierMin)
             {
-                if (!PrimeTableGetNextPrime(nPrimorialMultiplier))
+                //if (!PrimeTableGetNextPrime(nPrimorialMultiplier))
+				if (++nPrimorialMultiplierIndex == vPrimorials.size())
+				{
                     printf("PrimecoinMiner() : primorial minimum overflow");
-                Primorial(nPrimorialMultiplier, mpzPrimorial);
+					nPrimorialMultiplierIndex -= 1;
+				}
+                //Primorial(nPrimorialMultiplier, mpzPrimorial);
+				mpzPrimorial = vPrimorials[nPrimorialMultiplierIndex];
             }
             mpz_class mpzFixedMultiplier;
             if (mpzPrimorial > nHashFactor) {
@@ -889,8 +908,11 @@ bool MinePrime_hp(Reap_CPU_param* state, Work& tempwork)
 
             // Primecoin: mine for prime chain
             unsigned int nProbableChainLength;
-            if (MineProbablePrimeChain(state, tempwork, psieve, mpzFixedMultiplier, fNewBlock, nTriedMultiplier, nProbableChainLength, nTests, nPrimesHit, nChainsHit, mpzHash, nPrimorialMultiplier))
-            {
+            if (MineProbablePrimeChain(
+				state, tempwork, psieve, mpzFixedMultiplier, fNewBlock, 
+				nTriedMultiplier, nProbableChainLength, nTests, nPrimesHit, nChainsHit, mpzHash, nPrimorialMultiplier
+				)
+			) {
 				return true;
                 /*SetThreadPriority(THREAD_PRIORITY_NORMAL);
                 CheckWork(pblock, *pwalletMain, reservekey);
@@ -923,15 +945,24 @@ bool MinePrime_hp(Reap_CPU_param* state, Work& tempwork)
                 // Primecoin: dynamic adjustment of primorial multiplier
                 if (fIncrementPrimorial)
                 {
-                    if (!PrimeTableGetNextPrime(nPrimorialMultiplier))
+	                //if (!PrimeTableGetNextPrime(nPrimorialMultiplier))
+					if (++nPrimorialMultiplierIndex == vPrimorials.size())
+					{
                         printf("PrimecoinMiner() : primorial increment overflow");
+						nPrimorialMultiplierIndex -= 1;
+					}
                 }
-                else if (nPrimorialMultiplier > nPrimorialHashFactor)
+                else if (nPrimorialMultiplierIndex > nPrimorialHashIndex)
                 {
-                    if (!PrimeTableGetPreviousPrime(nPrimorialMultiplier))
+                    //if (!PrimeTableGetPreviousPrime(nPrimorialMultiplier))
+					if (--nPrimorialMultiplierIndex < 1)
+					{
                         printf("PrimecoinMiner() : primorial decrement overflow");
+						nPrimorialMultiplierIndex += 1;
+					}
                 }
-                Primorial(nPrimorialMultiplier, mpzPrimorial);
+				//Primorial(nPrimorialMultiplier, mpzPrimorial);
+				mpzPrimorial = vPrimorials[nPrimorialMultiplierIndex];
 				
 				return false;
             }
